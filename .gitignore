@@ -1,0 +1,29 @@
+# Build artifacts
+build/
+XCFrameworks/
+*.xcarchive
+*.zip
+
+# Xcode
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/project.xcworkspace/
+!*.xcodeproj/xcshareddata/
+*.xcworkspace/*
+!*.xcworkspace/contents.xcworkspacedata
+*.xcuserdata
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Swift Package Manager
+.build/
+Packages/
+Package.resolved
+*.swiftpm
+
+# Temporary files
+*.tmp
+*.temp

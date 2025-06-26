@@ -1,0 +1,219 @@
+name: Daily XCFramework Release
+
+on:
+  # Run daily at 00:00 UTC
+  schedule:
+    - cron: "0 0 * * *"
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check-changes:
+    runs-on: macos-latest
+    outputs:
+      has-changes: ${{ steps.check.outputs.has-changes }}
+      new-commits: ${{ steps.check.outputs.new-commits }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Check for changes in submodule since yesterday
+        id: check
+        run: |
+          cd idb
+          # Get commit from 24 hours ago
+          YESTERDAY=$(date -u -v-1d '+%Y-%m-%d %H:%M:%S')
+          echo "Checking for commits since: $YESTERDAY"
+
+          # Get commits since yesterday
+          NEW_COMMITS=$(git log --since="$YESTERDAY" --pretty=format:"%h %s" --reverse)
+
+          if [ -n "$NEW_COMMITS" ]; then
+            echo "has-changes=true" >> $GITHUB_OUTPUT
+            echo "New commits found:"
+            echo "$NEW_COMMITS"
+
+            # Format commits for release notes (escape newlines for GitHub output)
+            ESCAPED_COMMITS=$(echo "$NEW_COMMITS" | sed 's/$/\\n/' | tr -d '\n')
+            echo "new-commits=$ESCAPED_COMMITS" >> $GITHUB_OUTPUT
+          else
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+            echo "No new commits since yesterday"
+          fi
+
+  build-and-release:
+    runs-on: macos-latest
+    needs: check-changes
+    if: needs.check-changes.outputs.has-changes == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Build XCFrameworks
+        run: |
+          ./build.sh
+
+      - name: Calculate XCFramework checksums
+        id: checksums
+        run: |
+          cd XCFrameworks
+          echo "## XCFramework Checksums" > ../checksums.md
+          echo "" >> ../checksums.md
+          echo "For Swift Package Manager integration, use these checksums:" >> ../checksums.md
+          echo "" >> ../checksums.md
+
+          for framework in *.xcframework; do
+            if [ -d "$framework" ]; then
+              # Create a temporary zip to calculate checksum
+              zip -r "${framework}.zip" "$framework"
+              checksum=$(shasum -a 256 "${framework}.zip" | cut -d' ' -f1)
+              echo "- **$framework**: \`$checksum\`" >> ../checksums.md
+              rm "${framework}.zip"
+            fi
+          done
+
+          # Also calculate individual framework binary checksums for reference
+          echo "" >> ../checksums.md
+          echo "### Individual Framework Binary Checksums:" >> ../checksums.md
+          echo "" >> ../checksums.md
+
+          for framework in *.xcframework; do
+            if [ -d "$framework" ]; then
+              # Find the actual binary inside the framework
+              binary_path=$(find "$framework" -name "*.a" -o -name "lib*.dylib" -o -name "*.framework" | head -1)
+              if [ -f "$binary_path" ]; then
+                checksum=$(shasum -a 256 "$binary_path" | cut -d' ' -f1)
+                echo "- **$framework binary**: \`$checksum\`" >> ../checksums.md
+              fi
+            fi
+          done
+
+      - name: Create release archives
+        run: |
+          cd XCFrameworks
+          for framework in *.xcframework; do
+            if [ -d "$framework" ]; then
+              zip -r "${framework}.zip" "$framework"
+            fi
+          done
+
+      - name: Generate release tag
+        id: tag
+        run: |
+          TAG=$(date -u '+%Y.%m.%d')
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Release tag: $TAG"
+
+      - name: Delete existing release if it exists
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Deleting existing release: $TAG"
+            gh release delete "$TAG" --yes
+          fi
+
+          # Also delete the tag if it exists
+          if git tag -l | grep -q "^$TAG$"; then
+            echo "Deleting existing tag: $TAG"
+            git tag -d "$TAG" || true
+            git push origin ":refs/tags/$TAG" || true
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Create GitHub Release
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+
+          # Format commit list for release notes
+          COMMITS="${{ needs.check-changes.outputs.new-commits }}"
+          FORMATTED_COMMITS=$(echo -e "$COMMITS" | sed 's/^/- /')
+
+          # Create release notes
+          cat > release-notes.md << EOF
+          # IDB XCFrameworks - $TAG
+
+          This release contains pre-built XCFrameworks of Facebook's IDB components, automatically built from the latest upstream changes.
+
+          ## Changes Since Last Release
+
+          $FORMATTED_COMMITS
+
+          ## Usage
+
+          Download the XCFrameworks from this release and integrate them into your project, or reference them in your own Package.swift as binary targets using the URLs and checksums provided below.
+
+          $(cat checksums.md)
+
+          ## Available Frameworks
+
+          - **FBControlCore.xcframework** - Core functionality and utilities
+          - **FBDeviceControl.xcframework** - Device communication and control
+          - **FBSimulatorControl.xcframework** - iOS Simulator management
+          - **XCTestBootstrap.xcframework** - XCTest integration and utilities
+
+          ## Requirements
+
+          - macOS 11.0+
+          - Xcode 13.0+
+          - Swift 5.9+
+          EOF
+
+          # Create the release
+          gh release create "$TAG" \
+            XCFrameworks/*.zip \
+            --title "IDB XCFrameworks $TAG" \
+            --notes-file release-notes.md \
+            --latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Update README with latest release info
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          
+          # Calculate checksums for each framework
+          cd XCFrameworks
+          FBCONTROLCORE_CHECKSUM=$(shasum -a 256 FBControlCore.xcframework.zip | cut -d' ' -f1)
+          FBDEVICECONTROL_CHECKSUM=$(shasum -a 256 FBDeviceControl.xcframework.zip | cut -d' ' -f1)
+          FBSIMULATORCONTROL_CHECKSUM=$(shasum -a 256 FBSimulatorControl.xcframework.zip | cut -d' ' -f1)
+          XCTESTBOOTSTRAP_CHECKSUM=$(shasum -a 256 XCTestBootstrap.xcframework.zip | cut -d' ' -f1)
+          cd ..
+          
+          # Update README.md example with latest release version and checksums
+          sed -i.bak "s|download/[0-9]*\.[0-9]*\.[0-9]*/|download/$TAG/|g" README.md
+          
+          # Update checksums in order they appear in the file
+          sed -i.bak "0,/replace-with-actual-checksum-from-release-notes/{s/replace-with-actual-checksum-from-release-notes/$FBCONTROLCORE_CHECKSUM/;}" README.md
+          sed -i.bak "0,/replace-with-actual-checksum-from-release-notes/{s/replace-with-actual-checksum-from-release-notes/$FBDEVICECONTROL_CHECKSUM/;}" README.md
+          sed -i.bak "0,/replace-with-actual-checksum-from-release-notes/{s/replace-with-actual-checksum-from-release-notes/$FBSIMULATORCONTROL_CHECKSUM/;}" README.md  
+          sed -i.bak "0,/replace-with-actual-checksum-from-release-notes/{s/replace-with-actual-checksum-from-release-notes/$XCTESTBOOTSTRAP_CHECKSUM/;}" README.md
+          rm README.md.bak
+
+      - name: Commit and push updated README
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          if git diff --quiet README.md; then
+            echo "No changes to README.md"
+          else
+            git add README.md
+            git commit -m "Update README.md with release ${{ steps.tag.outputs.tag }} info"
+            git push
+          fi
