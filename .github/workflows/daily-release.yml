@@ -68,6 +68,15 @@ jobs:
         run: |
           ./build.sh
 
+      - name: Create release archives
+        run: |
+          cd XCFrameworks
+          for framework in *.xcframework; do
+            if [ -d "$framework" ]; then
+              zip -r "${framework}.zip" "$framework"
+            fi
+          done
+
       - name: Calculate XCFramework checksums
         id: checksums
         run: |
@@ -77,13 +86,11 @@ jobs:
           echo "For Swift Package Manager integration, use these checksums:" >> ../checksums.md
           echo "" >> ../checksums.md
 
-          for framework in *.xcframework; do
-            if [ -d "$framework" ]; then
-              # Create a temporary zip to calculate checksum
-              zip -r "${framework}.zip" "$framework"
-              checksum=$(swift package compute-checksum "${framework}.zip")
-              echo "- **$framework**: \`$checksum\`" >> ../checksums.md
-              rm "${framework}.zip"
+          for framework in *.xcframework.zip; do
+            if [ -f "$framework" ]; then
+              checksum=$(swift package compute-checksum "$framework")
+              framework_name=$(basename "$framework" .zip)
+              echo "- **$framework_name**: \`$checksum\`" >> ../checksums.md
             fi
           done
 
@@ -100,15 +107,6 @@ jobs:
                 checksum=$(shasum -a 256 "$binary_path" | cut -d' ' -f1)
                 echo "- **$framework binary**: \`$checksum\`" >> ../checksums.md
               fi
-            fi
-          done
-
-      - name: Create release archives
-        run: |
-          cd XCFrameworks
-          for framework in *.xcframework; do
-            if [ -d "$framework" ]; then
-              zip -r "${framework}.zip" "$framework"
             fi
           done
 
