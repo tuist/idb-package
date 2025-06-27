@@ -62,23 +62,23 @@ let package = Package(
         ),
         .binaryTarget(
             name: "FBControlCore",
-            url: "https://github.com/tuist/idb-package/releases/download/2025.06.27/FBControlCore.xcframework.zip",
-            checksum: "5e514de37eae1e09b2748bcab00689d7c954b182d3700ce8f8fc6f38487255fa"
+            url: "https://github.com/tuist/idb-package/releases/download/2025.06.27.1037/FBControlCore.xcframework.zip",
+            checksum: "2efaf134ddb06ff173455c70781099a33b07b591b00ce9b8d9eb60ff8e4cff18"
         ),
         .binaryTarget(
             name: "FBDeviceControl",
-            url: "https://github.com/tuist/idb-package/releases/download/2025.06.27/FBDeviceControl.xcframework.zip",
-            checksum: "e32c78befc44cdd03c8154466c2da15ce68e75013f95791cb7a3bc42b7a562af"
+            url: "https://github.com/tuist/idb-package/releases/download/2025.06.27.1037/FBDeviceControl.xcframework.zip",
+            checksum: "7cedd360bfc69e0f0ae49d09d88297204dda402154464708359a68bda688b753"
         ),
         .binaryTarget(
             name: "FBSimulatorControl",
-            url: "https://github.com/tuist/idb-package/releases/download/2025.06.27/FBSimulatorControl.xcframework.zip",
-            checksum: "888f699fe261cc195fe6bb73bb44289f89ddbf755d8447b6ceb742700e8c1013"
+            url: "https://github.com/tuist/idb-package/releases/download/2025.06.27.1037/FBSimulatorControl.xcframework.zip",
+            checksum: "679255259a6fb7f5d49774fde368364d91cc1bf60b0baac6f8fa7172058e0f6d"
         ),
         .binaryTarget(
             name: "XCTestBootstrap",
-            url: "https://github.com/tuist/idb-package/releases/download/2025.06.27/XCTestBootstrap.xcframework.zip",
-            checksum: "1a59a14969e0445627e6aa8cabb160558c525a36a0d6687e92fa5558e1f56549"
+            url: "https://github.com/tuist/idb-package/releases/download/2025.06.27.1037/XCTestBootstrap.xcframework.zip",
+            checksum: "d9ffe80058ce52b95da3dbbd0658ea808e969e9ac0ce8a648a9d34af43bd8f0a"
         )
     ]
 )
