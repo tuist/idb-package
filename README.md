@@ -63,22 +63,22 @@ let package = Package(
         .binaryTarget(
             name: "FBControlCore",
             url: "https://github.com/tuist/idb-package/releases/download/2025.06.27/FBControlCore.xcframework.zip",
-            checksum: "7abc7e0ddf472b2b7d76da51b5139a7052f4626edd7d3556f4f68775f35edcb8"
+            checksum: "5e514de37eae1e09b2748bcab00689d7c954b182d3700ce8f8fc6f38487255fa"
         ),
         .binaryTarget(
             name: "FBDeviceControl",
             url: "https://github.com/tuist/idb-package/releases/download/2025.06.27/FBDeviceControl.xcframework.zip",
-            checksum: "ef26859b9f8c8073f7fee4cc949b2f168ddcfc54de1feaf18a6ff2226e485043"
+            checksum: "e32c78befc44cdd03c8154466c2da15ce68e75013f95791cb7a3bc42b7a562af"
         ),
         .binaryTarget(
             name: "FBSimulatorControl",
             url: "https://github.com/tuist/idb-package/releases/download/2025.06.27/FBSimulatorControl.xcframework.zip",
-            checksum: "730145d446012cb63de05a209118666b4fceb7eb43ba66842788d2c348a2b0da"
+            checksum: "888f699fe261cc195fe6bb73bb44289f89ddbf755d8447b6ceb742700e8c1013"
         ),
         .binaryTarget(
             name: "XCTestBootstrap",
             url: "https://github.com/tuist/idb-package/releases/download/2025.06.27/XCTestBootstrap.xcframework.zip",
-            checksum: "e69392a3673550679ee6df088f2b619f62546647be2dd77dd19034a9009cad6f"
+            checksum: "1a59a14969e0445627e6aa8cabb160558c525a36a0d6687e92fa5558e1f56549"
         )
     ]
 )
