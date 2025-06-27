@@ -63,22 +63,22 @@ let package = Package(
         .binaryTarget(
             name: "FBControlCore",
             url: "https://github.com/tuist/idb-package/releases/download/2025.06.27/FBControlCore.xcframework.zip",
-            checksum: "replace-with-actual-checksum-from-release-notes"
+            checksum: "b6865c179398ae6717aec31ba9f605792464c2fef7588867a52a10696d61d64c"
         ),
         .binaryTarget(
             name: "FBDeviceControl",
             url: "https://github.com/tuist/idb-package/releases/download/2025.06.27/FBDeviceControl.xcframework.zip",
-            checksum: "replace-with-actual-checksum-from-release-notes"
+            checksum: "e47ebde371dc579f39596f75a30cec843b73de80861223ae03974a6203ca38ba"
         ),
         .binaryTarget(
             name: "FBSimulatorControl",
             url: "https://github.com/tuist/idb-package/releases/download/2025.06.27/FBSimulatorControl.xcframework.zip",
-            checksum: "replace-with-actual-checksum-from-release-notes"
+            checksum: "7ff7bb2e59d5001cd46893dca154181475f9acfed82179106fcd48953764acf9"
         ),
         .binaryTarget(
             name: "XCTestBootstrap",
             url: "https://github.com/tuist/idb-package/releases/download/2025.06.27/XCTestBootstrap.xcframework.zip",
-            checksum: "replace-with-actual-checksum-from-release-notes"
+            checksum: "d0269db0d756a0b9c95a7c75e18e90aa8a76c9fd355e485bab7ba687e9c2c1f7"
         )
     ]
 )
