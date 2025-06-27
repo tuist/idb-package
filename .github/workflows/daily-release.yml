@@ -81,7 +81,7 @@ jobs:
             if [ -d "$framework" ]; then
               # Create a temporary zip to calculate checksum
               zip -r "${framework}.zip" "$framework"
-              checksum=$(shasum -a 256 "${framework}.zip" | cut -d' ' -f1)
+              checksum=$(swift package compute-checksum "${framework}.zip")
               echo "- **$framework**: \`$checksum\`" >> ../checksums.md
               rm "${framework}.zip"
             fi
@@ -196,10 +196,10 @@ jobs:
           
           # Calculate checksums for each framework
           cd XCFrameworks
-          FBCONTROLCORE_CHECKSUM=$(shasum -a 256 FBControlCore.xcframework.zip | cut -d' ' -f1)
-          FBDEVICECONTROL_CHECKSUM=$(shasum -a 256 FBDeviceControl.xcframework.zip | cut -d' ' -f1)
-          FBSIMULATORCONTROL_CHECKSUM=$(shasum -a 256 FBSimulatorControl.xcframework.zip | cut -d' ' -f1)
-          XCTESTBOOTSTRAP_CHECKSUM=$(shasum -a 256 XCTestBootstrap.xcframework.zip | cut -d' ' -f1)
+          FBCONTROLCORE_CHECKSUM=$(swift package compute-checksum FBControlCore.xcframework.zip)
+          FBDEVICECONTROL_CHECKSUM=$(swift package compute-checksum FBDeviceControl.xcframework.zip)
+          FBSIMULATORCONTROL_CHECKSUM=$(swift package compute-checksum FBSimulatorControl.xcframework.zip)
+          XCTESTBOOTSTRAP_CHECKSUM=$(swift package compute-checksum XCTestBootstrap.xcframework.zip)
           cd ..
           
           # Update README.md example with latest release version and checksums
