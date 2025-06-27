@@ -205,11 +205,11 @@ jobs:
           # Update README.md example with latest release version and checksums
           sed -i.bak "s|download/[0-9]*\.[0-9]*\.[0-9]*/|download/$TAG/|g" README.md
           
-          # Update checksums in order they appear in the file
-          sed -i.bak "0,/replace-with-actual-checksum-from-release-notes/{s/replace-with-actual-checksum-from-release-notes/$FBCONTROLCORE_CHECKSUM/;}" README.md
-          sed -i.bak "0,/replace-with-actual-checksum-from-release-notes/{s/replace-with-actual-checksum-from-release-notes/$FBDEVICECONTROL_CHECKSUM/;}" README.md
-          sed -i.bak "0,/replace-with-actual-checksum-from-release-notes/{s/replace-with-actual-checksum-from-release-notes/$FBSIMULATORCONTROL_CHECKSUM/;}" README.md  
-          sed -i.bak "0,/replace-with-actual-checksum-from-release-notes/{s/replace-with-actual-checksum-from-release-notes/$XCTESTBOOTSTRAP_CHECKSUM/;}" README.md
+          # Update checksums - find and replace checksum values for each framework
+          sed -i.bak "/FBControlCore\.xcframework\.zip\"/,/checksum:/ s/checksum: \"[^\"]*\"/checksum: \"$FBCONTROLCORE_CHECKSUM\"/" README.md
+          sed -i.bak "/FBDeviceControl\.xcframework\.zip\"/,/checksum:/ s/checksum: \"[^\"]*\"/checksum: \"$FBDEVICECONTROL_CHECKSUM\"/" README.md
+          sed -i.bak "/FBSimulatorControl\.xcframework\.zip\"/,/checksum:/ s/checksum: \"[^\"]*\"/checksum: \"$FBSIMULATORCONTROL_CHECKSUM\"/" README.md
+          sed -i.bak "/XCTestBootstrap\.xcframework\.zip\"/,/checksum:/ s/checksum: \"[^\"]*\"/checksum: \"$XCTESTBOOTSTRAP_CHECKSUM\"/" README.md
           rm README.md.bak
 
       - name: Commit and push updated README
