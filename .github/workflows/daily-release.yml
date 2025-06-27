@@ -51,7 +51,7 @@ jobs:
   build-and-release:
     runs-on: macos-latest
     needs: check-changes
-    if: needs.check-changes.outputs.has-changes == 'true'
+    if: needs.check-changes.outputs.has-changes == 'true' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -142,17 +142,24 @@ jobs:
 
           # Format commit list for release notes
           COMMITS="${{ needs.check-changes.outputs.new-commits }}"
-          FORMATTED_COMMITS=$(echo -e "$COMMITS" | sed 's/^/- /')
+          if [ -n "$COMMITS" ]; then
+            FORMATTED_COMMITS=$(echo -e "$COMMITS" | sed 's/^/- /')
+            CHANGES_SECTION="## Changes Since Last Release
+
+          $FORMATTED_COMMITS"
+          else
+            CHANGES_SECTION="## Manual Release
+
+          This is a manual release with no new commits since the last release."
+          fi
 
           # Create release notes
           cat > release-notes.md << EOF
           # IDB XCFrameworks - $TAG
 
-          This release contains pre-built XCFrameworks of Facebook's IDB components, automatically built from the latest upstream changes.
+          This release contains pre-built XCFrameworks of Facebook's IDB components.
 
-          ## Changes Since Last Release
-
-          $FORMATTED_COMMITS
+          $CHANGES_SECTION
 
           ## Usage
 
