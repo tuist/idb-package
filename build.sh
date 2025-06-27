@@ -28,6 +28,52 @@ function invoke_xcodebuild() {
     xcodebuild $arguments
 }
 
+# Function to patch project files to expose required headers
+function patch_project_files() {
+    echo "🔧 Patching project files to expose required headers..."
+    
+    local project_file="$IDB_DIR/FBSimulatorControl.xcodeproj/project.pbxproj"
+    local umbrella_header="$IDB_DIR/FBSimulatorControl/FBSimulatorControl.h"
+    
+    # Backup original files
+    cp "$project_file" "$project_file.backup"
+    cp "$umbrella_header" "$umbrella_header.backup"
+    
+    # Make FBSimulatorApplicationCommands.h public
+    sed -i.tmp 's/AA1174B61CEA183F00EB699E \/\* FBSimulatorApplicationCommands\.h in Headers \*\/ = {isa = PBXBuildFile; fileRef = AA1174B41CEA183F00EB699E \/\* FBSimulatorApplicationCommands\.h \*\/; };/AA1174B61CEA183F00EB699E \/\* FBSimulatorApplicationCommands.h in Headers \*\/ = {isa = PBXBuildFile; fileRef = AA1174B41CEA183F00EB699E \/\* FBSimulatorApplicationCommands.h \*\/; settings = {ATTRIBUTES = (Public, ); }; };/' "$project_file"
+    
+    # Make FBSimulatorFileCommands.h public  
+    sed -i.tmp 's/AA3EA8531F31B20D003FBDC1 \/\* FBSimulatorFileCommands\.h in Headers \*\/ = {isa = PBXBuildFile; fileRef = AA3EA8511F31B20D003FBDC1 \/\* FBSimulatorFileCommands\.h \*\/; };/AA3EA8531F31B20D003FBDC1 \/\* FBSimulatorFileCommands.h in Headers \*\/ = {isa = PBXBuildFile; fileRef = AA3EA8511F31B20D003FBDC1 \/\* FBSimulatorFileCommands.h \*\/; settings = {ATTRIBUTES = (Public, ); }; };/' "$project_file"
+    
+    # Add FBSimulatorApplicationCommands.h to umbrella header (after FBSimulatorAccessibilityCommands.h)
+    sed -i.tmp '/^#import <FBSimulatorControl\/FBSimulatorAccessibilityCommands\.h>$/a\
+#import <FBSimulatorControl/FBSimulatorApplicationCommands.h>' "$umbrella_header"
+    
+    # Clean up temporary files
+    rm -f "$project_file.tmp" "$umbrella_header.tmp"
+    
+    echo "✅ Project files patched successfully"
+}
+
+# Function to restore original project files
+function restore_project_files() {
+    echo "🔄 Restoring original project files..."
+    
+    local project_file="$IDB_DIR/FBSimulatorControl.xcodeproj/project.pbxproj"
+    local umbrella_header="$IDB_DIR/FBSimulatorControl/FBSimulatorControl.h"
+    
+    # Restore from backups if they exist
+    if [ -f "$project_file.backup" ]; then
+        mv "$project_file.backup" "$project_file"
+    fi
+    
+    if [ -f "$umbrella_header.backup" ]; then
+        mv "$umbrella_header.backup" "$umbrella_header"
+    fi
+    
+    echo "✅ Original project files restored"
+}
+
 # Function to create XCFramework from FBSimulatorControl project
 function create_xcframework() {
     local framework=$1
@@ -125,12 +171,21 @@ function create_companion_xcframework() {
 # Build all frameworks
 echo "🚀 Starting XCFramework build process..."
 
+# Apply patches to expose required headers
+patch_project_files
+
+# Set up trap to ensure we always restore original files
+trap restore_project_files EXIT
+
 # List of frameworks to build from FBSimulatorControl project
 FRAMEWORKS=("FBControlCore" "XCTestBootstrap" "FBSimulatorControl" "FBDeviceControl")
 
 for framework in "${FRAMEWORKS[@]}"; do
     create_xcframework "$framework"
 done
+
+# Restore original files (trap will also do this, but let's be explicit)
+restore_project_files
 
 echo "✨ Build completed!"
 echo "📦 XCFrameworks created in: $XCFRAMEWORKS_DIR"
